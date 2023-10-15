@@ -5,14 +5,14 @@ const validators = require("../utils/validators");
 
 router.get("/:date?", (req, res) => {
   let dateToParse = null;
-  // Extract Date
   const { date } = req.params;
 
   if (!date) {
     dateToParse = new Date().toString();
   } else {
-    // check if date is valid
-    const isValid = validators.isDateValid(date);
+    // Check if the date is a valid date string or a Unix timestamp
+    const isUnixTimestamp = !isNaN(Number(date));
+    const isValid = validators.isDateValid(date) || isUnixTimestamp;
 
     if (!isValid) {
       res.status(400).json({
@@ -21,24 +21,28 @@ router.get("/:date?", (req, res) => {
       return;
     }
 
-    // Date is valid, move on
-
-    dateToParse = date;
+    // Parse date as string or unix timestamp
+    dateToParse = isUnixTimestamp ? parseInt(date) : date;
   }
+
   if (!dateToParse) {
     res.sendStatus(500);
     return;
   }
 
-  // Parse the Date into Unix and GMT
+  // Init Date object
   const dateObj = new Date(dateToParse);
+
+  // Properties
   const unix = dateObj.getTime();
   const gmt = dateObj.toUTCString();
 
+  // Send response
   res.status(200).json({
     unix,
     utc: gmt,
   });
+  return;
 });
 
 module.exports = router;
